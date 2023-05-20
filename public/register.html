@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ShieldLink - Register</title>
+  </head>
+  <body>
+    <form id="signup" method="POST">
+      <h1>Register</h1>
+      <label>Username:</label>
+      <input id="username" name="username" type="text" autocomplete="username" placeholder="Enter username" /><br/>
+      <label>Password: </label>
+      <input id="password" name="password" type="password" autocomplete="new-password" placeholder="Enter password" /><br/>
+      <label>Repeat: </label>
+      <input id="pwdrepeat" name="pwdrepeat" type="password" placeholder="Repeat password" /><br/>
+      <input type="submit" id="submit" value="Signup" />&nbsp;
+      <a href="/login.html">Login instead</a><br/>
+    </form>
+
+    <script type="text/javascript">
+      const signup = document.getElementById("signup");
+      const username = document.getElementById("username");
+      const password = document.getElementById("password");
+      const repeat = document.getElementById("pwdrepeat");
+      let error = document.getElementById("error");
+
+      signup.addEventListener("submit", (e) => {
+        if (!error) {
+          error = document.createElement("label");
+          error.id = "error";
+          error.style.color = "red";
+          signup.appendChild(error);
+        }
+        if (!username.value) {
+          error.innerHTML = "Please specify a username";
+          e.preventDefault();
+        } else if (!password.value) {
+          error.innerHTML = "Please specify a password";
+          e.preventDefault();
+        } else if (!repeat.value) {
+          error.innerHTML = "Please repeat password";
+          e.preventDefault();
+        } else if (password.value.length < 7) {
+          error.innerHTML = "Passwords should be more than 6 characters.";
+          e.preventDefault();
+        } else if (password.value !== repeat.value) {
+          error.innerHTML = "Passwords do not match";
+          e.preventDefault();
+        }
+      })
+    </script>
+  </body>
+</html>
