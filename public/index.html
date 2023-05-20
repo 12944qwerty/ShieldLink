@@ -1,58 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ShieldLink</title>
+    <head>
+        <meta charset="UTF-8">
+        <title>ShieldLink</title>
 
-    <script>
-        fetch("/user", {method: "GET"}).then((resp) => {
-            if (resp.status === 200) {
-                document.getElementById("login").remove();
-                document.getElementById("register").remove();
-            } else {
-                document.getElementById("sendData").remove();
+        <script>
+            fetch("/user", {method: "GET"}).then((resp) => {
+                if (resp.status === 200) {
+                    document.getElementById("login").remove();
+                    document.getElementById("register").remove();
+
+                    resp.json().then((json) => {
+                        const account = document.getElementById("account");
+                    })
+                } else {
+                    document.getElementById("account").remove();
+                    document.getElementById("sendData").remove();
+                    document.getElementById("logout").remove();
+                }
+            }).catch((err) => {
+                console.error(err);
+                
                 document.getElementById("account").remove();
+                document.getElementById("sendData").remove();
                 document.getElementById("logout").remove();
+            });
+        </script>
+        <style>
+            ul {
+                list-style-type: none;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
             }
-        }).catch((err) => {
-            console.error(err);
-            
-            document.getElementById("sendData").remove();
-            document.getElementById("account").remove();
-            document.getElementById("logout").remove();
-        });
-    </script>
-</head>
-<style>
-    ul {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-    }
+    
+            li {
+                float: left;
+            }
+    
+            li a {
+                display: block;
+                padding: 8px;
+                background-color: #dddddd;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                <li><a id="login" href="/login">Login</a></li>
+                <li><a id="register" href="/register">Register</a></li>
+                <li><a id="sendData" href="/sendData">Send Data</a></li>
+            </ul>
+        </nav>
 
-    li {
-        float: left;
-    }
+        <form id="logout" action="/logout" method="POST">
+            <input type="submit" value="Logout" />
+        </form>
 
-    li a {
-        display: block;
-        padding: 8px;
-        background-color: #dddddd;
-    }
-</style>
-<body>
-<nav>
-    <ul>
-        <li><a id="login" href="/login">Login</a></li>
-        <li><a id="register" href="/register">Register</a></li>
-        <li><a id="sendData" href="/sendData">Send Data</a></li>
-        <li><a id="account" href="/account">Account</a></li>
-    </ul>
-</nav>
+        <div id="account">
+            <h1>Account</h1>
+            <div id="username"></div>
 
-<form id="logout" action="/logout" method="POST">
-    <input type="submit" value="Logout" />
-</form>
-</body>
+            <!-- reset password form -->
+            <form id="resetPassword" action="/resetPassword" method="POST">
+                <label>Password: </label>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" /><br/>
+                <label>New Password: </label>
+                <input id="newpwd" name="newpwd" type="password" autocomplete="new-password" placeholder="Enter new password" /><br/>
+                <input type="submit" value="Reset Password" />
+            </form>
+        </div>
+    </body>
 </html>
