@@ -4,10 +4,13 @@ import session from 'express-session';
 import { Strategy } from 'passport-local';
 import argon2 from 'argon2';
 import bodyParser from 'body-parser';
+import { Equal } from 'typeorm';
+import crypto from 'crypto';
+import Cryptr from 'cryptr';
 
 import { AppDataSource } from "./data-source";
 import { User } from "./entity/User";
-import { Equal } from 'typeorm';
+import { Data } from "./entity/Data";
 
 AppDataSource
     .initialize()
@@ -57,31 +60,24 @@ async function authUser(username: string, password: string, done) {
 passport.use(new Strategy(authUser))
 
 passport.serializeUser<string>((user, done) => {
-  done(null, (user as User).username);
+  done(null, JSON.stringify(user));
 });
 
-passport.deserializeUser(async (username: string, done) => {
-  done(null, await AppDataSource.getRepository(User).findOne({
-    where: { username: username },
-  }));
+passport.deserializeUser(async (user: string, done) => {
+  done(null, JSON.parse(user))
 });
 
 app.use(function (req: Request, res: Response, next) {
-  console.log(req.user, req.session)
   res.locals.user = req.user as User;
   next();
 });
 
 app.get('/user', async (req: Request, res: Response) => {
-  
-  console.log(req.user, res.locals, res.locals.user?.username);
   const user = await AppDataSource.getRepository(User).findOne({
     where: { username: Equal(res.locals.user?.username) },
   });
-  console.log(res.locals.user?.username, user)
 
   if (user) {
-    user.password = ''; // do not share
     res.json(user);
   } else {
     res.status(401).send({ message: 'unauthorized' });
@@ -89,7 +85,7 @@ app.get('/user', async (req: Request, res: Response) => {
 });
 
 app.post('/login', passport.authenticate('local', {
-  successRedirect: "/account",
+  successRedirect: "/",
   failureRedirect: "/login",
 }));
 
@@ -97,6 +93,20 @@ app.post('/register', async (req: Request, res: Response) => {
   const user = new User();
   user.username = req.body.username;
   user.password = await argon2.hash(req.body.password);
+  const crypt = new Cryptr(req.body.password);
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: {
+      type: 'spki',
+      format: 'pem'
+    },
+    privateKeyEncoding: {
+      type: 'pkcs8',
+      format: 'pem',
+    }
+  });
+  user.publicKey = publicKey;
+  user.privateKey = crypt.encrypt(privateKey);
   await AppDataSource.manager.save(user);
 
   res.redirect('/login');
@@ -107,6 +117,52 @@ app.post('/logout', (req: Request, res: Response) => {
     console.log(err);
   });
   res.redirect('/');
+});
+
+app.post('/sendData', async (req: Request, res: Response) => {
+  if (req.user) {
+    const user = await AppDataSource.getRepository(User).findOne({
+      where: { username: Equal(req.body.username) },
+    })
+
+    if (user) {
+      const encrypted = crypto.publicEncrypt({
+        key: user.publicKey,
+        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
+      }, Buffer.from(req.body.data)).toString('base64');
+
+      const data = new Data();
+      data.from = res.locals.user.username;
+      data.to = req.body.username;
+      data.data = encrypted;
+      AppDataSource.manager.save(data);
+    }
+
+    res.redirect('/');
+  } else {
+    res.status(401).send({ message: 'unauthorized' });
+  }
+});
+
+app.use('/data/:id', async (req: Request, res: Response) => {
+  if (req.user) {
+    const data = await AppDataSource.getRepository(Data).findOne({
+      where: { id: parseInt(req.params.id) },
+    });
+
+    if (data) {
+      if (data.to !== res.locals.user?.username) {
+        res.status(401).send({ message: 'unauthorized' });
+      } else {
+        res.send(data.data);
+      }
+    } else {
+      res.status(404).send({ message: 'not found' });
+    }
+  } else {
+    res.status(401).redirect('/login');
+  }
 })
 
 app.listen(8000, () => {

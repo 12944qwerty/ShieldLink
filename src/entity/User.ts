@@ -10,4 +10,10 @@ export class User {
 
     @Column()
     password: string
+
+    @Column()
+    publicKey: string
+
+    @Column()
+    privateKey: string
 }

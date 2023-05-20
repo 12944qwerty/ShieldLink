@@ -12,17 +12,17 @@
 
                     resp.json().then((json) => {
                         const account = document.getElementById("account");
+                        const username = document.getElementById("username");
+                        username.innerHTML = json.username;
                     })
                 } else {
                     document.getElementById("account").remove();
-                    document.getElementById("sendData").remove();
                     document.getElementById("logout").remove();
                 }
             }).catch((err) => {
                 console.error(err);
                 
                 document.getElementById("account").remove();
-                document.getElementById("sendData").remove();
                 document.getElementById("logout").remove();
             });
         </script>
@@ -50,7 +50,6 @@
             <ul>
                 <li><a id="login" href="/login">Login</a></li>
                 <li><a id="register" href="/register">Register</a></li>
-                <li><a id="sendData" href="/sendData">Send Data</a></li>
             </ul>
         </nav>
 
@@ -62,14 +61,36 @@
             <h1>Account</h1>
             <div id="username"></div>
 
-            <!-- reset password form -->
-            <form id="resetPassword" action="/resetPassword" method="POST">
-                <label>Password: </label>
-                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" /><br/>
-                <label>New Password: </label>
-                <input id="newpwd" name="newpwd" type="password" autocomplete="new-password" placeholder="Enter new password" /><br/>
-                <input type="submit" value="Reset Password" />
+            <form id="sendData" action="/sendData" method="POST">
+                <label>Send to </label>
+                <input id="username" type="text" name="username" /><br/>
+                <input id="data" type="text" name="data" />
+                <input type="submit" value="Send Data" />
             </form>
         </div>
+
+        <script type="text/javascript">
+            const sendData = document.getElementById("sendData")
+            const error = document.getElementById("error");
+            const username = document.getElementById("username");
+            const data = document.getElementById("data");
+            
+            sendData.addEventListener("submit", (e) => {
+                if (!error) {
+                    error = document.createElement("label");
+                    error.id = "error";
+                    error.style.color = "red";
+                    sendData.appendChild(error);
+                }
+                
+                if (!username.value) {
+                    error.innerHTML = "Please enter a username";
+                    e.preventDefault();
+                } else if (!data.value) {
+                    error.innerHTML = "Please enter data";
+                    e.preventDefault();
+                }
+            });
+        </script>
     </body>
 </html>
