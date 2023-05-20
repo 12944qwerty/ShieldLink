@@ -3,6 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>ShieldLink</title>
+
+    <script>
+        fetch("/user", {method: "GET"}).then((resp) => {
+            if (resp.status === 200) {
+                document.getElementById("login").remove();
+                document.getElementById("register").remove();
+            } else {
+                document.getElementById("sendData").remove();
+                document.getElementById("account").remove();
+                document.getElementById("logout").remove();
+            }
+        }).catch((err) => {
+            console.error(err);
+            
+            document.getElementById("sendData").remove();
+            document.getElementById("account").remove();
+            document.getElementById("logout").remove();
+        });
+    </script>
 </head>
 <style>
     ul {
@@ -25,14 +44,14 @@
 <body>
 <nav>
     <ul>
-        <li><a href="/login">Login</a></li>
-        <li><a href="/register">Register</a></li>
-        <li><a href="/sendData">Send Data</a></li>
-        <li><a href="/account">Account</a></li>
+        <li><a id="login" href="/login">Login</a></li>
+        <li><a id="register" href="/register">Register</a></li>
+        <li><a id="sendData" href="/sendData">Send Data</a></li>
+        <li><a id="account" href="/account">Account</a></li>
     </ul>
 </nav>
 
-<form action="/logout" method="POST">
+<form id="logout" action="/logout" method="POST">
     <input type="submit" value="Logout" />
 </form>
 </body>
