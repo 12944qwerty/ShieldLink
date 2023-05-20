@@ -1,7 +1,6 @@
 {
-  "name": "ShieldLink",
+  "name": "shieldlink",
   "version": "1.0.0",
-  "description": "",
   "main": "./build/index.js",
   "scripts": {
     "build": "npx tsc --project ./"
