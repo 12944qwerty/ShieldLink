@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import { Equal } from 'typeorm';
 import crypto from 'crypto';
 import Cryptr from 'cryptr';
+import path from 'path';
 
 import { AppDataSource } from "./data-source";
 import { User } from "./entity/User";
@@ -34,7 +35,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(express.static('public', { extensions: ['html'] }));
 
@@ -80,7 +81,7 @@ app.get('/user', async (req: Request, res: Response) => {
   if (user) {
     res.json(user);
   } else {
-    res.status(401).send({ message: 'unauthorized' });
+    res.status(401).json({ message: 'unauthorized' });
   }
 });
 
@@ -141,11 +142,11 @@ app.post('/sendData', async (req: Request, res: Response) => {
 
     res.redirect('/');
   } else {
-    res.status(401).send({ message: 'unauthorized' });
+    res.status(401).json({ message: 'unauthorized' });
   }
 });
 
-app.use('/data/:id', async (req: Request, res: Response) => {
+app.get('/data/:id', async (req: Request, res: Response) => {
   if (req.user) {
     const data = await AppDataSource.getRepository(Data).findOne({
       where: { id: parseInt(req.params.id) },
@@ -153,12 +154,47 @@ app.use('/data/:id', async (req: Request, res: Response) => {
 
     if (data) {
       if (data.to !== res.locals.user?.username) {
-        res.status(401).send({ message: 'unauthorized' });
+        res.status(401).json({ message: 'unauthorized' });
       } else {
-        res.send(data.data);
+        res.status(200).sendFile(path.join(__dirname, '../html/data.html'));
       }
     } else {
-      res.status(404).send({ message: 'not found' });
+      res.status(404).json({ message: 'not found' });
+    }
+  } else {
+    res.status(401).redirect('/login');
+  }
+});
+
+app.post('/data/:id', async (req: Request, res: Response) => {
+  if (req.user) {
+    const data = await AppDataSource.getRepository(Data).findOne({
+      where: { id: parseInt(req.params.id) },
+    });
+
+    if (data) {
+      if (data.to !== res.locals.user?.username) {
+        res.status(401).json({ message: 'unauthorized' });
+      } else {
+        const user = await AppDataSource.getRepository(User).findOne({
+          where: { username: res.locals.user.username },
+        });
+        if (user && await argon2.verify(user.password, req.body.password || '')) {
+          const crypt = new Cryptr(req.body.password);
+          const privateKey = crypt.decrypt(user.privateKey);
+          const decrypted = crypto.privateDecrypt({
+            key: privateKey,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: 'sha256',
+          }, Buffer.from(data.data, 'base64')).toString('ascii');
+
+          res.status(200).json({ data: decrypted, from: data.from });
+        } else {
+          res.status(401).json({ message: 'unauthorized' });
+        }
+      }
+    } else {
+      res.status(404).json({ message: 'not found' });
     }
   } else {
     res.status(401).redirect('/login');

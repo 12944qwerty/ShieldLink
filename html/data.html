@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ShieldLink - DATA</title>
+    <script type="text/javascript">
+      const pwd = prompt('Enter your password to retrieve data');
+      fetch(window.location.href, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          password: pwd
+        })
+      }).then((resp) => {
+        if (resp.status === 200) {
+          resp.json().then((json) => {
+            document.getElementById('data').innerText = json.data;
+            document.getElementById('from').innerText = json.from;
+          })
+        }
+      })
+    </script>
+  </head>
+  <body>
+    <div id="from"></div> says:<br/>
+    <div id="data"></div>
+  </body>
+</html>
