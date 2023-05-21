@@ -8,6 +8,16 @@ import { Equal } from 'typeorm';
 import crypto from 'crypto';
 import Cryptr from 'cryptr';
 import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
+
+if (!process.env.SECRET) {
+  throw new Error("SECRET environment var not defined");
+} else if (!process.env.DATABASE_TYPE) {
+  throw new Error("DATABASE_TYPE environment var not defined");
+} else if (!process.env.DATABASE) {
+  throw new Error("DATABASE environment var not defined");
+}
 
 import { AppDataSource } from "./data-source";
 import { User } from "./entity/User";
@@ -26,7 +36,7 @@ AppDataSource
 const app = express();
 
 app.use(session({
-  secret: 'uhgveodujhw4028fyhweuobvewvwenowh734gh',
+  secret: [process.env.SECRET],
   resave: false,
   saveUninitialized: false,
 }));
