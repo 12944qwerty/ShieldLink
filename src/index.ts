@@ -101,6 +101,12 @@ app.post('/login', passport.authenticate('local', {
 }));
 
 app.post('/register', async (req: Request, res: Response) => {
+  const exist = await AppDataSource.getRepository(User).findOne({
+    where: { username: Equal(req.body.username) },
+  });
+  if (exist) {
+    return res.status(401).json({ message: 'user already exists' });
+  }
   const user = new User();
   user.username = req.body.username;
   user.password = await argon2.hash(req.body.password);
